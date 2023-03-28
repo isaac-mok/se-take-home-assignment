@@ -10,6 +10,7 @@ import { CookingCompletedEventType, CookingCompletedEventArgs } from './core/Coo
 import { BotAddedEventType } from './core/Cooking/Events/BotAddedEvent';
 import { OrderCompletedEventType } from './core/Order/Events/OrderCompletedEvent';
 import { BotRemovedEventArgs, BotRemovedEventType } from './core/Cooking/Events/BotRemovedEvent';
+import { ProcessingOrderCancelledEventType } from './core/Order/Events/ProcessingOrderCancelledEvent';
 
 function App() {
   const [eventBus] = useState(new EventTarget())
@@ -28,7 +29,10 @@ function App() {
   const [cookingBots, setCookingBots] = useState<CookingBot[]>([])
 
   const refreshPendingOrders = useCallback(function () {
-    setPendingOrders([...orderHandler.acceptedOrders])
+    setPendingOrders([
+      ...orderHandler.processingOrders,
+      ...orderHandler.pendingOrders
+    ])
   }, [setPendingOrders, orderHandler])
 
   const refreshCompletedOrders = useCallback(function () {
@@ -69,6 +73,9 @@ function App() {
     listenToEvent(OrderCompletedEventType, () => {
       refreshPendingOrders()
       refreshCompletedOrders()
+    })
+    listenToEvent(ProcessingOrderCancelledEventType, () => {
+      refreshPendingOrders()
     })
     listenToEvent(BotRemovedEventType, function (e: CustomEventInit<BotRemovedEventArgs>) {
       const orderId = e.detail?.orderId
