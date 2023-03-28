@@ -13,7 +13,7 @@ describe('CookingHandler', function () {
     it('appends a bot to the bots array', test(function (this: typeof Sinon) {
       const cookingHandler = new CookingHandler(mockEventBus())
       expect(cookingHandler.bots.length).to.equal(0)
-      
+
       cookingHandler.addBot()
       expect(cookingHandler.bots.length).to.equal(1)
 
@@ -33,7 +33,7 @@ describe('CookingHandler', function () {
       const cookingHandler = new CookingHandler(mockEventBus())
       cookingHandler.addBot()
       cookingHandler.addBot()
-      
+
       cookingHandler.removeBot()
       expect(cookingHandler.bots.length).to.equal(1)
 
@@ -85,7 +85,7 @@ describe('CookingHandler', function () {
       cookingHandler.addBot()
       cookingHandler.cook(mockAcceptedOrder())
       cookingHandler.cook(mockAcceptedOrder())
-      
+
       expect(function () { cookingHandler.cook(mockAcceptedOrder()) }).to.throw('No cooking bots available.')
     }))
   })

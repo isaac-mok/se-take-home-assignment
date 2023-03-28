@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker'
-import { AcceptedOrder, Order } from './types'
+import { type AcceptedOrder, type Order } from './types'
 
 export function mockOrder (order?: Partial<Order>): Order {
   return {

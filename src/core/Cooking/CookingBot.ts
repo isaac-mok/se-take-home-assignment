@@ -1,6 +1,6 @@
-import { EventBus } from "../Event/types"
-import { AcceptedOrder } from "../Order/types"
-import { CookingCompletedEventArgs, CookingCompletedEventType } from "./Events/CookingCompletedEvent"
+import { type EventBus } from '../Event/types'
+import { type AcceptedOrder } from '../Order/types'
+import { type CookingCompletedEventArgs, CookingCompletedEventType } from './Events/CookingCompletedEvent'
 
 export const cookingTimeMs = 3000
 
@@ -17,7 +17,7 @@ export default class CookingBot {
     return this.order !== undefined
   }
 
-  public cook (order: AcceptedOrder) {
+  public cook (order: AcceptedOrder): void {
     this.order = order
 
     this.timeoutId = setTimeout(() => {
@@ -25,15 +25,18 @@ export default class CookingBot {
     }, cookingTimeMs)
   }
 
-  public stop () {
+  public stop (): AcceptedOrder | undefined {
     clearTimeout(this.timeoutId)
 
     return this.order
   }
 
-  protected complete () {
+  protected complete (): void {
     const orderId = this.order?.id
     this.order = undefined
-    this.eventBus.dispatchEvent(CookingCompletedEventType, { detail: { orderId } as CookingCompletedEventArgs })
+    if (orderId !== undefined) {
+      const eventArgs: CookingCompletedEventArgs = { orderId }
+      this.eventBus.dispatchEvent(CookingCompletedEventType, { detail: eventArgs })
+    }
   }
 }

@@ -1,8 +1,8 @@
-import { EventBus } from '../Event/types'
+import type { EventBus } from '../Event/types'
 import { OrderAddedEventType } from './Events/OrderAddedEvent'
 import { OrderCompletedEventType } from './Events/OrderCompletedEvent'
 import { ProcessingOrderCancelledEventType } from './Events/ProcessingOrderCancelledEvent'
-import { AcceptedOrder, Order, OrderId } from './types'
+import type { AcceptedOrder, Order, OrderId } from './types'
 
 export default class OrderHandler {
   protected eventBus: EventBus
@@ -21,7 +21,7 @@ export default class OrderHandler {
       id: ++this.id
     }
 
-    if (! order.isVip) {
+    if (!order.isVip) {
       this.pendingOrders.push(acceptedOrder)
     } else {
       let shouldPush = true
@@ -41,15 +41,13 @@ export default class OrderHandler {
   }
 
   public getNextOrderId (): OrderId | undefined {
-    for (let i = 0; i < this.pendingOrders.length; i++) {
-      return this.pendingOrders[i].id
-    }
+    return this.pendingOrders.length > 0 ? this.pendingOrders[0].id : undefined
   }
 
   public processNextOrder (): AcceptedOrder | undefined {
     const nextOrderId = this.getNextOrderId()
     if (nextOrderId === undefined) return undefined
-    
+
     const nextOrder = this.pendingOrders.splice(this.getPendingOrderIndexById(nextOrderId), 1)[0]
     this.processingOrders.push(nextOrder)
     return nextOrder
@@ -57,10 +55,8 @@ export default class OrderHandler {
 
   public cancelProcessingOrder (orderId: OrderId): void {
     const orderIndex = this.getProcessingOrderIndexById(orderId)
-    
-    this.insertPendingOrderByDate(this.processingOrders.splice(orderIndex, 1)[0])
 
-    console.log(this.pendingOrders)
+    this.insertPendingOrderByDate(this.processingOrders.splice(orderIndex, 1)[0])
   }
 
   public completeOrder (orderId: OrderId): void {
@@ -74,7 +70,7 @@ export default class OrderHandler {
   protected getPendingOrderIndexById (orderId: OrderId): number {
     const index = this.pendingOrders.findIndex(order => order.id === orderId)
 
-    if (index === -1) throw new Error('Order not found.')
+    if (index === -1) throw new Error('Order not pending.')
 
     return index
   }
@@ -82,7 +78,7 @@ export default class OrderHandler {
   protected getProcessingOrderIndexById (orderId: OrderId): number {
     const index = this.processingOrders.findIndex(order => order.id === orderId)
 
-    if (index === -1) throw new Error('Order not found.')
+    if (index === -1) throw new Error('Order not processing.')
 
     return index
   }
