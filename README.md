@@ -1,3 +1,6 @@
+## Deployment
+Deployed at: <a href="https://se-take-home-assignment-sandy.vercel.app/">https://se-take-home-assignment-sandy.vercel.app/</a>
+
 ## FeedMe Software Engineer Take Home Assignment
 Below is a take home assignment before the interview of the position. You are required to
 1. Understand the situation and use case. You may contact the interviewer for further clarification.
