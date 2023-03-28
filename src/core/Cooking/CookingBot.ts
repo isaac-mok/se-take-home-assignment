@@ -1,16 +1,16 @@
-import { DispatchEvent } from "../Event/types"
+import { EventBus } from "../Event/types"
 import { AcceptedOrder } from "../Order/types"
-import CookingCompletedEventType from "./Events/CookingCompletedEvent"
+import { CookingCompletedEventArgs, CookingCompletedEventType } from "./Events/CookingCompletedEvent"
 
 export const cookingTimeMs = 10000
 
 export default class CookingBot {
-  protected dispatchEvent: DispatchEvent
-  protected order?: AcceptedOrder
-  protected timeoutId: number | undefined
+  protected eventBus: EventBus
+  public order?: AcceptedOrder
+  protected timeoutId: number | NodeJS.Timeout | undefined
 
-  constructor (dispatchEvent: DispatchEvent) {
-    this.dispatchEvent = dispatchEvent
+  constructor (eventBus: EventBus) {
+    this.eventBus = eventBus
   }
 
   public isCooking (): boolean {
@@ -32,8 +32,8 @@ export default class CookingBot {
   }
 
   protected complete () {
-    this.dispatchEvent(CookingCompletedEventType, { details: { orderId: this.order?.id }})
-
+    const orderId = this.order?.id
     this.order = undefined
+    this.eventBus.dispatchEvent(CookingCompletedEventType, { detail: { orderId } as CookingCompletedEventArgs })
   }
 }

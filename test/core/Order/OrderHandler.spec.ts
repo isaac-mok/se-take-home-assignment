@@ -1,29 +1,30 @@
 import { expect } from 'chai'
 import Sinon from 'sinon'
 import SinonTest from 'sinon-test'
-import OrderHandler from '../../src/Order/OrderHandler'
-import { OrderId } from '../../src/Order/types'
-import { mockOrder } from './MockOrder'
+import OrderHandler from '../../../src/core/Order/OrderHandler'
+import { OrderId } from '../../../src/core/Order/types'
+import { mockOrder } from '../../../src/core/Order/MockOrder'
+import { mockEventBus } from '../Event/MockEventBus'
 
 const test = SinonTest(Sinon)
 
 describe('OrderHandler', function () {
   describe('addOrder', function () {
     it('returns order ID', test(function (this: typeof Sinon) {
-      const orderHandler = new OrderHandler(() => {})
+      const orderHandler = new OrderHandler(mockEventBus())
       expect(orderHandler.addOrder(mockOrder())).to.be.a('number')
     }))
-    it('adding VIP order first actually inserts', test(function (this: typeof Sinon) {
-      const orderHandler = new OrderHandler(() => {})
+    it('properly inserts VIP order when added first', test(function (this: typeof Sinon) {
+      const orderHandler = new OrderHandler(mockEventBus())
       orderHandler.addOrder(mockOrder({ isVip: true }))
 
       expect(orderHandler.acceptedOrders.length).to.equal(1)
     }))
-    it('adding order correctly grows acceptedOrders array', test(function (this: typeof Sinon) {
+    it('correctly grows acceptedOrders array', test(function (this: typeof Sinon) {
       const expectedOrder: boolean[] = [true, false, false]
 
       // First test length
-      const orderHandler = new OrderHandler(() => {})
+      const orderHandler = new OrderHandler(mockEventBus())
       expect(orderHandler.acceptedOrders.length).to.equal(0)
 
       orderHandler.addOrder(mockOrder({ isVip: false }))
@@ -38,8 +39,8 @@ describe('OrderHandler', function () {
         expect(order.isVip).to.equal(expectedIsVip)
       })
     }))
-    it('added orders have correct VIP status', test(function (this: typeof Sinon) {
-      const orderHandler = new OrderHandler(() => {})
+    it('adds orders with correct VIP status', test(function (this: typeof Sinon) {
+      const orderHandler = new OrderHandler(mockEventBus())
       const vipStatuses: Record<OrderId, boolean> = {}
 
       vipStatuses[orderHandler.addOrder(mockOrder({ isVip: false }))] = false
@@ -49,14 +50,14 @@ describe('OrderHandler', function () {
         expect(order.isVip).to.equal(vipStatuses[order.id])
       })
     }))
-    it('added orders have correct state', test(function (this: typeof Sinon) {
-      const orderHandler = new OrderHandler(() => {})
+    it('adds orders with correct state', test(function (this: typeof Sinon) {
+      const orderHandler = new OrderHandler(mockEventBus())
       orderHandler.addOrder(mockOrder())
 
       expect(orderHandler.acceptedOrders[0].state).to.equal('PENDING')
     }))
-    it('added orders have incrementing IDs', test(function (this: typeof Sinon) {
-      const orderHandler = new OrderHandler(() => {})
+    it('uses incrementing IDs', test(function (this: typeof Sinon) {
+      const orderHandler = new OrderHandler(mockEventBus())
       orderHandler.addOrder(mockOrder({ isVip: false }))
       orderHandler.addOrder(mockOrder({ isVip: true }))
       orderHandler.addOrder(mockOrder())
@@ -67,18 +68,27 @@ describe('OrderHandler', function () {
           expect(order.id).to.equal(index + 1)
         })
     }))
-    it('adding order dispatches event', test(function (this: typeof Sinon) {
+    it('dispatches event', test(function (this: typeof Sinon) {
       const dispatchEvent = this.spy()
-      const orderHandler = new OrderHandler(dispatchEvent)
+      const orderHandler = new OrderHandler(mockEventBus({ dispatchEvent }))
 
       orderHandler.addOrder(mockOrder({ isVip: false }))
       orderHandler.addOrder(mockOrder({ isVip: true }))
       expect(dispatchEvent.callCount).to.equal(2)
     }))
   })
+  describe('getNextOrderId', function () {
+    it('returns correct order ID', test(function (this: typeof Sinon) {
+      const orderHandler = new OrderHandler(mockEventBus())
+      orderHandler.addOrder(mockOrder({ isVip: false }))
+      const expectedOrderId = orderHandler.addOrder(mockOrder({ isVip: true }))
+
+      expect(orderHandler.getNextOrderId()).to.equal(expectedOrderId)
+    }))
+  })
   describe('processNextOrder', function () {
     it("changes first pending order's state to processing", test(function (this: typeof Sinon) {
-      const orderHandler = new OrderHandler(() => {})
+      const orderHandler = new OrderHandler(mockEventBus())
       orderHandler.addOrder(mockOrder({ isVip: false }))
       orderHandler.addOrder(mockOrder({ isVip: true }))
 
@@ -94,7 +104,7 @@ describe('OrderHandler', function () {
     it('returns correct orders', test(function (this: typeof Sinon) {
       const expectedOrders: [OrderId, boolean][] = []
 
-      const orderHandler = new OrderHandler(() => {})
+      const orderHandler = new OrderHandler(mockEventBus())
       expectedOrders[1] = [orderHandler.addOrder(mockOrder({ isVip: false })), false]
       expectedOrders[0] = [orderHandler.addOrder(mockOrder({ isVip: true })), true]
 
@@ -105,7 +115,7 @@ describe('OrderHandler', function () {
       })
     }))
     it('returns undefined when there are no pending orders', test(function (this: typeof Sinon) {
-      const orderHandler = new OrderHandler(() => {})
+      const orderHandler = new OrderHandler(mockEventBus())
 
       expect(orderHandler.processNextOrder()).to.be.an('undefined')
 
@@ -117,7 +127,7 @@ describe('OrderHandler', function () {
   })
   describe('cancelProcessingOrder', function () {
     it('cancels correct order', test(function (this: typeof Sinon) {
-      const orderHandler = new OrderHandler(() => {})
+      const orderHandler = new OrderHandler(mockEventBus())
       orderHandler.addOrder(mockOrder({ isVip: false }))
       orderHandler.addOrder(mockOrder())
       const orderIdToCancel = orderHandler.addOrder(mockOrder({ isVip: true }))
@@ -136,15 +146,15 @@ describe('OrderHandler', function () {
       })
     }))
     it('cannot cancel order that is not processing', test(function (this: typeof Sinon) {
-      const orderHandler = new OrderHandler(() => {})
+      const orderHandler = new OrderHandler(mockEventBus())
       const orderIdToCancel = orderHandler.addOrder(mockOrder({ isVip: true }))
 
       expect(function () { orderHandler.cancelProcessingOrder(orderIdToCancel) }).to.throw('Order not processing.')
     }))
   })
   describe('completeOrder', function () {
-    it('correct order is removed from acceptedOrders array', test(function (this: typeof Sinon) {
-      const orderHandler = new OrderHandler(() => {})
+    it('removes correct order from acceptedOrders array', test(function (this: typeof Sinon) {
+      const orderHandler = new OrderHandler(mockEventBus())
       orderHandler.addOrder(mockOrder({ isVip: false }))
       orderHandler.addOrder(mockOrder())
       const orderIdToComplete = orderHandler.addOrder(mockOrder({ isVip: true }))
@@ -158,8 +168,8 @@ describe('OrderHandler', function () {
         expect(order.id).to.not.equal(orderIdToComplete)
       })
     }))
-    it('correct order is moved to completedOrders array', test(function (this: typeof Sinon) {
-      const orderHandler = new OrderHandler(() => {})
+    it('moves correct order to completedOrders array', test(function (this: typeof Sinon) {
+      const orderHandler = new OrderHandler(mockEventBus())
 
       expect(orderHandler.completedOrders.length).to.equal(0)
 
@@ -175,11 +185,20 @@ describe('OrderHandler', function () {
       expect(orderHandler.completedOrders.length).to.equal(2)
     }))
     it('cannot complete same order twice', test(function (this: typeof Sinon) {
-      const orderHandler = new OrderHandler(() => {})
+      const orderHandler = new OrderHandler(mockEventBus())
       const orderIdToComplete = orderHandler.addOrder(mockOrder())
       orderHandler.completeOrder(orderIdToComplete)
 
       expect(function () { orderHandler.completeOrder(orderIdToComplete) }).to.throw('Order not found.')
+    }))
+    it('dispatches event', test(function (this: typeof Sinon) {
+      const dispatchEvent = this.spy()
+      const orderHandler = new OrderHandler(mockEventBus({ dispatchEvent }))
+      const orderIdToComplete = orderHandler.addOrder(mockOrder()) // Dispatches 1 event
+      expect(dispatchEvent.callCount).to.equal(1)
+
+      orderHandler.completeOrder(orderIdToComplete)
+      expect(dispatchEvent.callCount).to.equal(2)
     }))
   })
 })

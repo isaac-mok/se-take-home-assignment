@@ -1,16 +1,17 @@
 import { expect } from 'chai'
 import Sinon from 'sinon'
 import SinonTest from 'sinon-test'
-import CookingBot, { cookingTimeMs } from '../../src/Cooking/CookingBot'
-import { mockAcceptedOrder } from '../Order/MockOrder'
+import CookingBot, { cookingTimeMs } from '../../../src/core/Cooking/CookingBot'
+import { mockAcceptedOrder } from '../../../src/core/Order/MockOrder'
+import { mockEventBus } from '../Event/MockEventBus'
 
 const test = SinonTest(Sinon)
 
 describe('CookingBot', function () {
   describe('cook', function () {
-    it('event is dispatched after cooking timeout finishes', test(function (this: typeof Sinon) {
+    it('dispatches event after cooking timeout finishes', test(function (this: typeof Sinon) {
       const dispatchEvent = this.spy()
-      const cookingBot = new CookingBot(dispatchEvent)
+      const cookingBot = new CookingBot(mockEventBus({ dispatchEvent }))
       cookingBot.cook(mockAcceptedOrder())
 
       expect(dispatchEvent.callCount).to.equal(0)
@@ -21,18 +22,18 @@ describe('CookingBot', function () {
     }))
   })
   describe('isCooking', function () {
-    it('false before cooking', test(function (this: typeof Sinon) {
-      const cookingBot = new CookingBot(() => {})
+    it('is false before cooking', test(function (this: typeof Sinon) {
+      const cookingBot = new CookingBot(mockEventBus())
       expect(cookingBot.isCooking()).to.equal(false)
     }))
-    it('true when cooking', test(function (this: typeof Sinon) {
-      const cookingBot = new CookingBot(() => {})
+    it('is true when cooking', test(function (this: typeof Sinon) {
+      const cookingBot = new CookingBot(mockEventBus())
       cookingBot.cook(mockAcceptedOrder())
 
       expect(cookingBot.isCooking()).to.equal(true)
     }))
-    it('false after finished cooking', test(function (this: typeof Sinon) {
-      const cookingBot = new CookingBot(() => {})
+    it('is false after finished cooking', test(function (this: typeof Sinon) {
+      const cookingBot = new CookingBot(mockEventBus())
       cookingBot.cook(mockAcceptedOrder())
       this.clock.tick(cookingTimeMs)
 
@@ -40,9 +41,9 @@ describe('CookingBot', function () {
     }))
   })
   describe('stop', function () {
-    it('if stopped, event is not dispatched after cooking timeout finishes', test(function (this: typeof Sinon) {
+    it('does not dispatch event', test(function (this: typeof Sinon) {
       const dispatchEvent = this.spy()
-      const cookingBot = new CookingBot(dispatchEvent)
+      const cookingBot = new CookingBot(mockEventBus({ dispatchEvent }))
       cookingBot.cook(mockAcceptedOrder())
       cookingBot.stop()
       this.clock.tick(cookingTimeMs + 1000)

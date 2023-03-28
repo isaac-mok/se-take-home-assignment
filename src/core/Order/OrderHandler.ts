@@ -1,15 +1,16 @@
-import { DispatchEvent } from '../Event/types'
-import AddedOrderEventType from './Events/AddedOrderEvent'
+import { EventBus } from '../Event/types'
+import { OrderAddedEventType } from './Events/OrderAddedEvent'
+import { OrderCompletedEventType } from './Events/OrderCompletedEvent'
 import { AcceptedOrder, Order, OrderId } from './types'
 
 export default class OrderHandler {
-  protected dispatchEvent: DispatchEvent
+  protected eventBus: EventBus
   protected id = 0
   public acceptedOrders: AcceptedOrder[] = []
   public completedOrders: AcceptedOrder[] = []
 
-  constructor (dispatchEvent: DispatchEvent) {
-    this.dispatchEvent = dispatchEvent
+  constructor (eventBus: EventBus) {
+    this.eventBus = eventBus
   }
 
   public addOrder (order: Order): OrderId {
@@ -33,18 +34,26 @@ export default class OrderHandler {
       if (shouldPush) this.acceptedOrders.push(acceptedOrder)
     }
 
-    this.dispatchEvent(AddedOrderEventType, { details: null })
+    this.eventBus.dispatchEvent(OrderAddedEventType, null)
 
     return acceptedOrder.id
   }
 
-  public processNextOrder (): AcceptedOrder | undefined {
+  public getNextOrderId (): OrderId | undefined {
     for (let i = 0; i < this.acceptedOrders.length; i++) {
       if (this.acceptedOrders[i].state === 'PENDING') {
-        this.acceptedOrders[i].state = 'PROCESSING'
-        return this.acceptedOrders[i]
+        return this.acceptedOrders[i].id
       }
     }
+  }
+
+  public processNextOrder (): AcceptedOrder | undefined {
+    const nextOrderId = this.getNextOrderId()
+    if (nextOrderId === undefined) return undefined
+    
+    const nextOrderIndex = this.getAcceptedOrderIndexById(nextOrderId)
+    this.acceptedOrders[nextOrderIndex].state = 'PROCESSING'
+    return this.acceptedOrders[nextOrderIndex]
   }
 
   public cancelProcessingOrder (orderId: OrderId): void {
@@ -63,6 +72,7 @@ export default class OrderHandler {
     }
 
     this.completedOrders.push(order)
+    this.eventBus.dispatchEvent(OrderCompletedEventType, null)
   }
 
   protected getAcceptedOrderIndexById (orderId: OrderId): number {
