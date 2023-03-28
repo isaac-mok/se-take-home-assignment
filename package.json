@@ -1,0 +1,19 @@
+{
+  "scripts": {
+    "watch": "tsc --watch",
+    "test": "ts-mocha 'test/**/*.ts'"
+  },
+  "devDependencies": {
+    "@faker-js/faker": "^7.6.0",
+    "@types/chai": "^4.3.4",
+    "@types/mocha": "^10.0.1",
+    "@types/sinon": "^10.0.13",
+    "@types/sinon-test": "^2.4.3",
+    "chai": "^4.3.7",
+    "mocha": "^10.2.0",
+    "sinon": "^15.0.3",
+    "sinon-test": "^3.1.5",
+    "ts-mocha": "^10.0.0",
+    "typescript": "^5.0.2"
+  }
+}
