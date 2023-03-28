@@ -144,7 +144,7 @@ function App (): ReactElement {
               <tr key={index}>
                 <td>{index + 1}</td>
                 <td>{bot.order?.id}</td>
-                <td>{bot.order?.isVip}</td>
+                <td>{bot.order?.isVip.toString()}</td>
               </tr>
             ))}
           </tbody>

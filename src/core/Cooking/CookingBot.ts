@@ -2,7 +2,7 @@ import { type EventBus } from '../Event/types'
 import { type AcceptedOrder } from '../Order/types'
 import { type CookingCompletedEventArgs, CookingCompletedEventType } from './Events/CookingCompletedEvent'
 
-export const cookingTimeMs = 3000
+export const cookingTimeMs = 10000
 
 export default class CookingBot {
   protected eventBus: EventBus
