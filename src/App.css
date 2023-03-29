@@ -2,6 +2,17 @@ body {
   margin: 1rem;
 }
 
+table {
+  width: 300px;
+  table-layout: fixed;
+  border: 1px solid black;
+}
+
+td {
+  border: 1px solid black;
+  padding: 0.25rem 0.5rem;
+}
+
 button {
   margin-right: 0.5rem;
 }
